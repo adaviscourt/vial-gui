@@ -186,7 +186,7 @@ class KeycodeDisplay:
         return key is not None and key.qmk_id in cls.keymap_override
 
     @classmethod
-    def display_keycode(cls, widget, code):
+    def display_keycode(cls, widget, code, trns_resolved=None):
         text = cls.get_label(code)
         tooltip = Keycode.tooltip(code)
         mask = Keycode.is_mask(code)
@@ -208,6 +208,12 @@ class KeycodeDisplay:
             widget.setMaskColor(QApplication.palette().color(QPalette.Link))
         else:
             widget.setMaskColor(None)
+
+        if trns_resolved is not None:
+            resolved_code, source_layer = trns_resolved
+            widget.setText(cls.get_label(resolved_code))
+            widget.setToolTip("KC_TRNS → {} (layer {})".format(resolved_code, source_layer))
+            widget.setColor(QApplication.palette().color(QPalette.Disabled, QPalette.ButtonText))
 
     @classmethod
     def set_keymap_override(cls, override):

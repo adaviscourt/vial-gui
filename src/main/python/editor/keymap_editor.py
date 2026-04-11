@@ -168,6 +168,18 @@ class KeymapEditor(BasicEditor):
             return self.keyboard.encoder_layout[(self.current_layer, widget.desc.encoder_idx,
                                                  widget.desc.encoder_dir)]
 
+    def resolve_trns(self, widget, layer):
+        """ Walk layers below `layer` to find the first non-TRNS keycode. Returns (code, layer) or None. """
+        for l in range(layer - 1, -1, -1):
+            if widget.desc.row is not None:
+                code = self.keyboard.layout.get((l, widget.desc.row, widget.desc.col))
+            else:
+                code = self.keyboard.encoder_layout.get(
+                    (l, widget.desc.encoder_idx, widget.desc.encoder_dir))
+            if code is not None and code != "KC_TRNS":
+                return code, l
+        return None
+
     def refresh_layer_display(self):
         """ Refresh text on key widgets to display data corresponding to current layer """
 
@@ -179,7 +191,10 @@ class KeymapEditor(BasicEditor):
 
         for widget in self.container.widgets:
             code = self.code_for_widget(widget)
-            KeycodeDisplay.display_keycode(widget, code)
+            trns_resolved = None
+            if code == "KC_TRNS" and self.current_layer > 0:
+                trns_resolved = self.resolve_trns(widget, self.current_layer)
+            KeycodeDisplay.display_keycode(widget, code, trns_resolved)
         self.container.update()
         self.container.updateGeometry()
 
