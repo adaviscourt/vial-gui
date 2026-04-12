@@ -208,6 +208,11 @@ class KeycodeDisplay:
             widget.setMaskColor(QApplication.palette().color(QPalette.Link))
         else:
             widget.setMaskColor(None)
+        if trns_resolved is not None:
+            resolved_code, source_layer = trns_resolved
+            widget.setText(cls.get_label(resolved_code))
+            widget.setToolTip("KC_TRNS → {} (layer {})".format(resolved_code, source_layer))
+            widget.setColor(QApplication.palette().color(QPalette.Disabled, QPalette.ButtonText))
 
         if trns_resolved is not None:
             resolved_code, source_layer = trns_resolved

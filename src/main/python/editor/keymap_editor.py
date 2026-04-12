@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 import json
 
-from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QMessageBox, QWidget
+from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QMessageBox, QWidget, QCheckBox, QApplication
 from PyQt5.QtCore import Qt, pyqtSignal
 
 from any_keycode_dialog import AnyKeycodeDialog
@@ -32,13 +32,24 @@ class KeymapEditor(BasicEditor):
 
         self.layout_layers = QHBoxLayout()
         self.layout_size = QVBoxLayout()
+        self.layout_layers_toggles = QHBoxLayout()
         layer_label = QLabel(tr("KeymapEditor", "Layer"))
+        self.active_label = QLabel(tr("KeymapEditor", "Active"))
 
-        layout_labels_container = QHBoxLayout()
-        layout_labels_container.addWidget(layer_label)
-        layout_labels_container.addLayout(self.layout_layers)
-        layout_labels_container.addStretch()
-        layout_labels_container.addLayout(self.layout_size)
+        layout_top_row = QHBoxLayout()
+        layout_top_row.addWidget(layer_label)
+        layout_top_row.addLayout(self.layout_layers)
+        layout_top_row.addStretch()
+        layout_top_row.addLayout(self.layout_size)
+
+        self.layout_toggle_row = QHBoxLayout()
+        self.layout_toggle_row.addWidget(self.active_label)
+        self.layout_toggle_row.addLayout(self.layout_layers_toggles)
+        self.layout_toggle_row.addStretch()
+
+        layout_labels_container = QVBoxLayout()
+        layout_labels_container.addLayout(layout_top_row)
+        layout_labels_container.addLayout(self.layout_toggle_row)
 
         # contains the actual keyboard
         self.container = KeyboardWidget(layout_editor)
@@ -54,6 +65,9 @@ class KeymapEditor(BasicEditor):
         w.clicked.connect(self.on_empty_space_clicked)
 
         self.layer_buttons = []
+        self.layer_toggle_buttons = []
+        self.layer_toggle_cells = []
+        self.active_layers = set()
         self.keyboard = None
         self.current_layer = 0
 
@@ -85,7 +99,18 @@ class KeymapEditor(BasicEditor):
             label.deleteLater()
         self.layer_buttons = []
 
-        # create new layer labels
+        # delete old toggle checkboxes
+        for cb in self.layer_toggle_buttons:
+            cb.hide()
+            cb.deleteLater()
+        self.layer_toggle_buttons = []
+        for cell in getattr(self, "layer_toggle_cells", []):
+            cell.hide()
+            cell.deleteLater()
+        self.layer_toggle_cells = []
+
+        # create new layer labels and toggles
+        self.active_layers = set(range(self.keyboard.layers))
         for x in range(self.keyboard.layers):
             btn = SquareButton(str(x))
             btn.setFocusPolicy(Qt.NoFocus)
@@ -94,6 +119,32 @@ class KeymapEditor(BasicEditor):
             btn.clicked.connect(lambda state, idx=x: self.switch_layer(idx))
             self.layout_layers.addWidget(btn)
             self.layer_buttons.append(btn)
+
+            cb = QCheckBox()
+            cb.setChecked(True)
+            cb.setFocusPolicy(Qt.NoFocus)
+            cb.setToolTip(tr("KeymapEditor", "Include layer {} when resolving KC_TRNS").format(x))
+            if x == 0:
+                cb.setEnabled(False)
+            else:
+                cb.stateChanged.connect(lambda state, idx=x: self.on_toggle_layer(idx, state))
+            # wrap in a fixed-width container to align with layer buttons above
+            cell = QWidget()
+            cell_size = int(round(QApplication.fontMetrics().height() * 1.667))
+            cell.setFixedWidth(cell_size)
+            cell_layout = QHBoxLayout(cell)
+            cell_layout.setContentsMargins(0, 0, 0, 0)
+            cell_layout.addWidget(cb, 0, Qt.AlignCenter)
+            self.layout_layers_toggles.addWidget(cell)
+            self.layer_toggle_buttons.append(cb)
+            self.layer_toggle_cells.append(cell)
+
+        # show toggle row only when there are layers above 0
+        has_upper = self.keyboard.layers > 1
+        self.active_label.setVisible(has_upper)
+        for cell in self.layer_toggle_cells:
+            cell.setVisible(has_upper)
+
         for x in range(0,2):
             btn = SquareButton("-") if x else SquareButton("+")
             btn.setFocusPolicy(Qt.NoFocus)
@@ -168,9 +219,17 @@ class KeymapEditor(BasicEditor):
             return self.keyboard.encoder_layout[(self.current_layer, widget.desc.encoder_idx,
                                                  widget.desc.encoder_dir)]
 
+    def on_toggle_layer(self, idx, state):
+        if state:
+            self.active_layers.add(idx)
+        else:
+            self.active_layers.discard(idx)
+        self.refresh_layer_display()
+
     def resolve_trns(self, widget, layer):
-        """ Walk layers below `layer` to find the first non-TRNS keycode. Returns (code, layer) or None. """
-        for l in range(layer - 1, -1, -1):
+        """ Walk downward through active layers to find what KC_TRNS inherits from """
+        candidates = sorted([l for l in self.active_layers if l < layer], reverse=True)
+        for l in candidates:
             if widget.desc.row is not None:
                 code = self.keyboard.layout.get((l, widget.desc.row, widget.desc.col))
             else:
