@@ -7,7 +7,7 @@ import time
 from logging.handlers import RotatingFileHandler
 
 from PyQt5.QtCore import QCoreApplication, QStandardPaths
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QScrollArea, QFrame
 
 from hidproxy import hid
@@ -213,7 +213,15 @@ class KeycodeDisplay:
             resolved_label = "(none)" if resolved_code == "KC_NO" else cls.get_label(resolved_code)
             widget.setText(resolved_label)
             widget.setToolTip("KC_TRNS → {} (layer {})".format(resolved_code, source_layer))
-            widget.setColor(QApplication.palette().color(QPalette.Disabled, QPalette.ButtonText))
+            p = QApplication.palette()
+            fg = p.color(QPalette.ButtonText)
+            bg = p.color(QPalette.Button)
+            muted = QColor(
+                (fg.red()   * 4 + bg.red()   * 6) // 10,
+                (fg.green() * 4 + bg.green() * 6) // 10,
+                (fg.blue()  * 4 + bg.blue()  * 6) // 10,
+            )
+            widget.setColor(muted)
 
     @classmethod
     def set_keymap_override(cls, override):

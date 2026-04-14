@@ -2,7 +2,7 @@
 import json
 
 from PyQt5.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QMessageBox, QWidget, QCheckBox, QApplication
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, QSettings, pyqtSignal
 
 from any_keycode_dialog import AnyKeycodeDialog
 from editor.basic_editor import BasicEditor
@@ -36,10 +36,19 @@ class KeymapEditor(BasicEditor):
         layer_label = QLabel(tr("KeymapEditor", "Layer"))
         self.active_label = QLabel(tr("KeymapEditor", "Active"))
 
+        self.chk_show_inherited = QCheckBox(tr("KeymapEditor", "Show inherited keys"))
+        self.chk_show_inherited.setFocusPolicy(Qt.NoFocus)
+        self.chk_show_inherited.setToolTip(tr("KeymapEditor",
+            "Show what KC_TRNS keys inherit from lower layers"))
+        saved = QSettings("Vial", "Vial").value("keymap/show_inherited", False, bool)
+        self.chk_show_inherited.setChecked(saved)
+        self.chk_show_inherited.stateChanged.connect(self.on_show_inherited_changed)
+
         layout_top_row = QHBoxLayout()
         layout_top_row.addWidget(layer_label)
         layout_top_row.addLayout(self.layout_layers)
         layout_top_row.addStretch()
+        layout_top_row.addWidget(self.chk_show_inherited)
         layout_top_row.addLayout(self.layout_size)
 
         self.layout_toggle_row = QHBoxLayout()
@@ -139,11 +148,7 @@ class KeymapEditor(BasicEditor):
             self.layer_toggle_buttons.append(cb)
             self.layer_toggle_cells.append(cell)
 
-        # show toggle row only when there are layers above 0
-        has_upper = self.keyboard.layers > 1
-        self.active_label.setVisible(has_upper)
-        for cell in self.layer_toggle_cells:
-            cell.setVisible(has_upper)
+        self._update_toggle_row_visibility()
 
         for x in range(0,2):
             btn = SquareButton("-") if x else SquareButton("+")
@@ -219,6 +224,17 @@ class KeymapEditor(BasicEditor):
             return self.keyboard.encoder_layout[(self.current_layer, widget.desc.encoder_idx,
                                                  widget.desc.encoder_dir)]
 
+    def on_show_inherited_changed(self, state):
+        QSettings("Vial", "Vial").setValue("keymap/show_inherited", bool(state))
+        self._update_toggle_row_visibility()
+        self.refresh_layer_display()
+
+    def _update_toggle_row_visibility(self):
+        show = self.chk_show_inherited.isChecked() and self.keyboard is not None and self.keyboard.layers > 1
+        self.active_label.setVisible(show)
+        for cell in self.layer_toggle_cells:
+            cell.setVisible(show)
+
     def on_toggle_layer(self, idx, state):
         if state:
             self.active_layers.add(idx)
@@ -251,7 +267,7 @@ class KeymapEditor(BasicEditor):
         for widget in self.container.widgets:
             code = self.code_for_widget(widget)
             trns_resolved = None
-            if code == "KC_TRNS" and self.current_layer > 0:
+            if self.chk_show_inherited.isChecked() and code == "KC_TRNS" and self.current_layer > 0:
                 trns_resolved = self.resolve_trns(widget, self.current_layer)
             KeycodeDisplay.display_keycode(widget, code, trns_resolved)
         self.container.update()
