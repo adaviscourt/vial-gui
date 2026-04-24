@@ -36,25 +36,40 @@ class ActionText(BasicAction):
 
     tag = "text"
 
-    def __init__(self, text=""):
+    def __init__(self, text="", char_delay=0):
         super().__init__()
         self.text = text
+        self.char_delay = char_delay
 
     def serialize(self, vial_protocol):
-        return self.text.encode("utf-8")
+        if self.char_delay <= 0:
+            return self.text.encode("utf-8")
+        if vial_protocol < VIAL_PROTOCOL_ADVANCED_MACROS:
+            raise RuntimeError("ActionText with char_delay can only be used with vial_protocol>=2")
+        delay = self.char_delay
+        delay_bytes = struct.pack("BBBB", SS_QMK_PREFIX, SS_DELAY_CODE,
+                                  (delay % 255) + 1, (delay // 255) + 1)
+        out = b""
+        chars = list(self.text)
+        for i, ch in enumerate(chars):
+            out += ch.encode("utf-8")
+            if i < len(chars) - 1:
+                out += delay_bytes
+        return out
 
     def save(self):
-        return super().save() + [self.text]
+        return super().save() + [self.text, self.char_delay]
 
     def restore(self, act):
         super().restore(act)
         self.text = act[1]
+        self.char_delay = act[2] if len(act) > 2 else 0
 
     def __eq__(self, other):
-        return super().__eq__(other) and self.text == other.text
+        return super().__eq__(other) and self.text == other.text and self.char_delay == other.char_delay
 
     def __repr__(self):
-        return "{}<{}>".format(self.tag, self.text)
+        return "{}<{},{}>".format(self.tag, self.text, self.char_delay)
 
 
 class ActionSequence(BasicAction):

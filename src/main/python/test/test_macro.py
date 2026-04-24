@@ -92,7 +92,9 @@ class TestMacro(unittest.TestCase):
         tap = ActionTap(["CMB_TOG", "KC_B", "KC_A"])
         self.assertEqual(tap.save(), ["tap", "CMB_TOG", "KC_B", "KC_A"])
         text = ActionText("Hello world")
-        self.assertEqual(text.save(), ["text", "Hello world"])
+        self.assertEqual(text.save(), ["text", "Hello world", 0])
+        text = ActionText("Hello world", 25)
+        self.assertEqual(text.save(), ["text", "Hello world", 25])
         delay = ActionDelay(123)
         self.assertEqual(delay.save(), ["delay", 123])
 
@@ -103,12 +105,43 @@ class TestMacro(unittest.TestCase):
         tap = ActionTap()
         tap.restore(["tap", "CMB_TOG", "KC_B", "KC_A"])
         self.assertEqual(tap, ActionTap(["CMB_TOG", "KC_B", "KC_A"]))
+        # legacy save format without char_delay must still restore
         text = ActionText()
         text.restore(["text", "Hello world"])
         self.assertEqual(text, ActionText("Hello world"))
+        # new save format with char_delay
+        text = ActionText()
+        text.restore(["text", "Hello world", 25])
+        self.assertEqual(text, ActionText("Hello world", 25))
         delay = ActionDelay()
         delay.restore(["delay", 123])
         self.assertEqual(delay, ActionDelay(123))
+
+    def test_serialize_text_char_delay(self):
+        kb = DummyKeyboard(None)
+        kb.vial_protocol = 2
+        # delay=1 -> per-char bytes: \x01\x04\x02\x01 (SS_QMK_PREFIX, SS_DELAY_CODE, 2, 1)
+        data = kb.macro_serialize([ActionText("abc", 1)])
+        self.assertEqual(data, b"a\x01\x04\x02\x01b\x01\x04\x02\x01c")
+        # empty text produces no bytes
+        data = kb.macro_serialize([ActionText("", 50)])
+        self.assertEqual(data, b"")
+        # single char produces no trailing delay
+        data = kb.macro_serialize([ActionText("x", 50)])
+        self.assertEqual(data, b"x")
+        # char_delay=0 preserves legacy single-blob behavior
+        data = kb.macro_serialize([ActionText("abc", 0)])
+        self.assertEqual(data, b"abc")
+
+    def test_serialize_text_char_delay_v1_raises(self):
+        kb = DummyKeyboard(None)
+        kb.vial_protocol = 1
+        # char_delay requires protocol v2 (same policy as ActionDelay)
+        with self.assertRaises(RuntimeError):
+            kb.macro_serialize([ActionText("abc", 10)])
+        # char_delay=0 on v1 still works (unchanged behavior)
+        data = kb.macro_serialize([ActionText("abc", 0)])
+        self.assertEqual(data, b"abc")
 
     def test_twobyte_keycodes(self):
         kb = DummyKeyboard(None)
