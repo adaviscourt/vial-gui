@@ -3,12 +3,8 @@ set -e
 
 cd /vial-gui
 
-python3.10 -m venv docker_venv
-. docker_venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
-
-pyinstaller --noconfirm --clean vial-linux.spec
+uv sync --extra build --frozen
+uv run pyinstaller --noconfirm --clean vial-linux.spec
 
 APPDIR=AppDir
 rm -rf "$APPDIR"
@@ -31,5 +27,3 @@ EOF
 chmod +x "$APPDIR/AppRun"
 
 ARCH=x86_64 appimagetool --no-appstream "$APPDIR" /output/Vial-x86_64.AppImage
-
-deactivate

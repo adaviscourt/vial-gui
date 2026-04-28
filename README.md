@@ -19,9 +19,32 @@ Visit https://get.vial.today/ to download a binary release of Vial.
 
 #### Development
 
-Requires Python 3.10 or newer.
+Requires Python 3.13 or newer. The project uses [uv](https://docs.astral.sh/uv/) to manage dependencies and Python versions; it will install a matching Python automatically.
 
-Install dependencies:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) (`brew install uv`, `pipx install uv`, or the install script).
+
+Install dependencies (creates `.venv/`):
+
+```
+uv sync
+```
+
+To launch the application:
+
+```
+uv run python src/main/python/main.py
+```
+
+To produce a frozen build with PyInstaller (platform-specific):
+
+```
+uv sync --extra build
+uv run pyinstaller vial-mac.spec     # macOS  -> dist/Vial.app
+uv run pyinstaller vial-win.spec     # Windows -> dist/Vial/Vial.exe
+uv run pyinstaller vial-linux.spec   # Linux   -> dist/Vial/Vial
+```
+
+If you'd rather use plain pip:
 
 ```
 python3 -m venv venv
@@ -29,17 +52,4 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-To launch the application:
-
-```
-source venv/bin/activate
-python src/main/python/main.py
-```
-
-To produce a frozen build with PyInstaller (platform-specific):
-
-```
-pyinstaller vial-mac.spec     # macOS  -> dist/Vial.app
-pyinstaller vial-win.spec     # Windows -> dist/Vial/Vial.exe
-pyinstaller vial-linux.spec   # Linux   -> dist/Vial/Vial
-```
+`requirements.txt` lists the same direct dependencies; `uv.lock` additionally pins exact transitive versions for reproducible builds.

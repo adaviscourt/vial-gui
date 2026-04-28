@@ -1,12 +1,8 @@
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "vial-gui"
 version = "0.7.5"
 description = "GUI for configuring Vial-compatible QMK keyboards"
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 license = { text = "GPL-2.0-or-later" }
 readme = "README.md"
 dependencies = [
@@ -26,11 +22,6 @@ test = [
     "pytest-xvfb>=3; sys_platform == 'linux'",
 ]
 
-[project.scripts]
-vial = "main:main"
-
-[tool.setuptools]
-package-dir = { "" = "src/main/python" }
-
-[tool.setuptools.packages.find]
-where = ["src/main/python"]
+# vial-gui is run from source, not installed as a package.
+[tool.uv]
+package = false
