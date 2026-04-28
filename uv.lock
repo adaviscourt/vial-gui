@@ -78,12 +78,6 @@ wheels = [
 ]
 
 [[package]]
-name = "hidraw"
-version = "0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d3/51/02747233b1be350549e75df608a63dd32ea53c1a8d6de007c33430a5dc01/hidraw-0.1.tar.gz", hash = "sha256:bff751e6a278bf481a3366c671c763ce0f56781fd944297e8de9f6762b4c02e0", size = 1398, upload-time = "2010-02-21T19:45:33.914Z" }
-
-[[package]]
 name = "iniconfig"
 version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2969,7 +2963,6 @@ build = [
     { name = "pyinstaller" },
 ]
 test = [
-    { name = "hidraw", marker = "sys_platform == 'linux'" },
     { name = "pytest" },
     { name = "pytest-qt" },
     { name = "pytest-xvfb", marker = "sys_platform == 'linux'" },
@@ -2979,7 +2972,6 @@ test = [
 requires-dist = [
     { name = "certifi" },
     { name = "hidapi", specifier = ">=0.14" },
-    { name = "hidraw", marker = "sys_platform == 'linux' and extra == 'test'", specifier = ">=0.1" },
     { name = "keyboard", specifier = "==0.13.5" },
     { name = "pyinstaller", marker = "extra == 'build'", specifier = ">=6,<7" },
     { name = "pyqt5", specifier = ">=5.15,<5.16" },
