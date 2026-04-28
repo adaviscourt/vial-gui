@@ -20,8 +20,15 @@ test = [
     "pytest>=7",
     "pytest-qt>=4",
     "pytest-xvfb>=3; sys_platform == 'linux'",
+    "hidraw>=0.1; sys_platform == 'linux'",
 ]
 
 # vial-gui is run from source, not installed as a package.
 [tool.uv]
 package = false
+required-environments = [
+    "sys_platform == 'win32' and platform_machine == 'AMD64'",
+    "sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "sys_platform == 'darwin' and platform_machine == 'arm64'",
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
