@@ -54,6 +54,9 @@ class UncaughtHook(QtCore.QObject):
         sys._excepthook(exc_type, exc_value, exc_traceback)
 
 if __name__ == '__main__':
+    import multiprocessing
+    multiprocessing.freeze_support()
+
     if len(sys.argv) == 2 and sys.argv[1] == "--linux-recorder":
         from linux_keystroke_recorder import linux_keystroke_recorder
 
