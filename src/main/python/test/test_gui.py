@@ -480,7 +480,7 @@ def test_combos(qtbot):
     min_y = min(p.y() for p in bbox)
     max_y = max(p.y() for p in bbox)
     pos_mask = QPoint(int((min_x + max_x) / 2), int(min_y + (max_y - min_y) * 4/5))
-    pos = QPoint(bbox[0].x(), bbox[0].y())
+    pos = QPoint(int(bbox[0].x()), int(bbox[0].y()))
     qtbot.mouseClick(w[0], qt_api.QtCore.Qt.MouseButton.LeftButton, pos=pos)
     assert mw.tray_keycodes.isVisible()
 
@@ -570,7 +570,7 @@ def test_tap_dance(qtbot):
     min_y = min(p.y() for p in bbox)
     max_y = max(p.y() for p in bbox)
     pos_mask = QPoint(int((min_x + max_x) / 2), int(min_y + (max_y - min_y) * 4/5))
-    pos = QPoint(bbox[0].x(), bbox[0].y())
+    pos = QPoint(int(bbox[0].x()), int(bbox[0].y()))
     qtbot.mouseClick(w[0], qt_api.QtCore.Qt.MouseButton.LeftButton, pos=pos)
     assert mw.tray_keycodes.isVisible()
 
