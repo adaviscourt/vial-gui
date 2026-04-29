@@ -18,9 +18,19 @@ jobs:
         path: util/linux-builder/output/Vial-x86_64.AppImage
 
   build-mac:
-    runs-on: macos-13
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-13
+            arch: x86_64
+            deployment_target: '10.13'
+          - runner: macos-14
+            arch: arm64
+            deployment_target: '11.0'
+    runs-on: ${{ matrix.runner }}
     env:
-      MACOSX_DEPLOYMENT_TARGET: '10.13'
+      MACOSX_DEPLOYMENT_TARGET: ${{ matrix.deployment_target }}
 
     steps:
     - uses: actions/checkout@v4
@@ -44,13 +54,13 @@ jobs:
           --icon-size 96 \
           --app-drop-link 350 150 \
           --no-internet-enable \
-          vial-mac.dmg \
+          vial-mac-${{ matrix.arch }}.dmg \
           dist/Vial.app
 
     - uses: actions/upload-artifact@v4
       with:
-        name: vial-mac
-        path: vial-mac.dmg
+        name: vial-mac-${{ matrix.arch }}
+        path: vial-mac-${{ matrix.arch }}.dmg
 
   build-win:
     runs-on: windows-2025
