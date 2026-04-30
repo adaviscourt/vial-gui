@@ -36,11 +36,12 @@ coll = COLLECT(
 app = BUNDLE(
     coll,
     name="Vial.app",
-    icon=None,
+    icon=str(REPO / "src" / "main" / "icons" / "Icon.icns"),
     bundle_identifier="today.vial",
     info_plist={
         "CFBundleShortVersionString": "0.7.5",
         "CFBundleVersion": "0.7.5",
         "NSHighResolutionCapable": True,
+        "CFBundleIconFile": "Icon.icns",
     },
 )
