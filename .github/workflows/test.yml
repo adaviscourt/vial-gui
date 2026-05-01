@@ -2,7 +2,7 @@ name: Test
 
 on:
   push:
-    branches: ['**']
+    branches: [main]
   pull_request:
   workflow_call:
 
@@ -17,6 +17,38 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y libusb-1.0-0-dev libudev-dev libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-cursor0 xvfb
+
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install Python deps
+      run: uv sync --extra test --frozen
+
+    - name: Run tests
+      run: uv run pytest -v src/main/python/test
+
+  test-mac:
+    runs-on: macos-14
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Install Python deps
+      run: uv sync --extra test --frozen
+
+    - name: Run tests
+      run: uv run pytest -v src/main/python/test
+
+  test-win:
+    runs-on: windows-2025
+
+    steps:
+    - uses: actions/checkout@v4
 
     - uses: astral-sh/setup-uv@v5
       with:

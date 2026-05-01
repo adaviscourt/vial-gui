@@ -191,7 +191,7 @@ all_mw = []
 
 
 def prepare(qtbot, keyboard_json, combos=None, tap_dance=None):
-    import hidraw as hid
+    from hidproxy import hid
 
     vk = VirtualKeyboard(keyboard_json, combos=combos, tap_dance=tap_dance)
     MockDevice.vk = vk
