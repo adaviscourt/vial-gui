@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QObject, pyqtSignal, Qt
-from PyQt5.QtWidgets import QLineEdit, QToolButton, QWidget, QSizePolicy, QSpinBox
+from PyQt5.QtWidgets import QLineEdit, QToolButton, QWidget, QSizePolicy, QSpinBox, QHBoxLayout
 
 from constants import KEY_SIZE_RATIO
 from tabbed_keycodes import TabbedKeycodes
@@ -47,17 +47,43 @@ class ActionTextUI(BasicActionUI):
         self.text.setText(self.act.text)
         self.text.textChanged.connect(self.on_change)
 
+        self.delay = QSpinBox()
+        self.delay.setMinimum(0)
+        self.delay.setMaximum(64000)
+        self.delay.setValue(self.act.char_delay)
+        self.delay.setSuffix(" ms/char")
+        self.delay.setToolTip(
+            "Delay inserted between characters when the macro plays back.\n"
+            "Increase this if characters or punctuation are being dropped.\n"
+            "0 = no delay (requires Vial protocol v2 to have any effect)."
+        )
+        self.delay.valueChanged.connect(self.on_delay_change)
+
+        self.layout_container = QWidget()
+        self.layout_container.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Maximum)
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.text)
+        layout.addWidget(self.delay)
+        self.layout_container.setLayout(layout)
+
     def insert(self, row):
-        self.container.addWidget(self.text, row, 2)
+        self.container.addWidget(self.layout_container, row, 2)
 
     def remove(self):
-        self.container.removeWidget(self.text)
+        self.container.removeWidget(self.layout_container)
 
     def delete(self):
         self.text.deleteLater()
+        self.delay.deleteLater()
+        self.layout_container.deleteLater()
 
     def on_change(self):
         self.act.text = self.text.text()
+        self.changed.emit()
+
+    def on_delay_change(self):
+        self.act.char_delay = self.delay.value()
         self.changed.emit()
 
 
